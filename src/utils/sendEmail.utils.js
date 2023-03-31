@@ -3,6 +3,7 @@ import path from 'path';
 import puppeteer from 'puppeteer';
 import util from 'util';
 import request from 'request';
+import userController from '../controllers/user.controller.js';
 
 
 const sendEMail = async (bodyData) => {
@@ -42,6 +43,7 @@ const sendEMail = async (bodyData) => {
         //     path.resolve() + '/public/pdf_files/2cube-test_fr.pdf'
         // ];
         const filepaths = [filePath_en, filePath_fr, filePath_es];
+        const contId = bodyData.id;        
 
         filepaths.forEach((filepath) => {
             const formData = {
@@ -63,14 +65,19 @@ const sendEMail = async (bodyData) => {
                 // res.status(200).send('File uploaded successfully')
             });
         });
+        await userController.upateUrl(filepaths, contId);
 
     }
 
     // Example usage
     async function main() {
-        const en_data = bodyData.data_en;
-        const fr_data = bodyData.data_fr;
-        const es_data = bodyData.data_es;
+        // const en_data = bodyData.data_en;
+        // const fr_data = bodyData.data_fr;
+        // const es_data = bodyData.data_es;
+
+        const en_data = bodyData;
+        const fr_data = bodyData;
+        const es_data = bodyData;
 
         // English data
         const data_en = {
