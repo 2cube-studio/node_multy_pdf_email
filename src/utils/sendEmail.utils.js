@@ -2,6 +2,8 @@ import fs from 'fs';
 import path from 'path';
 import puppeteer from 'puppeteer';
 import util from 'util';
+import request from 'request';
+
 
 const sendEMail = async (req, res, data) => {
     const writeFileAsync = util.promisify(fs.writeFile);
@@ -17,13 +19,54 @@ const sendEMail = async (req, res, data) => {
         return pdfBuffer;
     }
 
+    async function StorePdf(attachments) {
+
+        //===* multiple file's store in hubdb *====//
+        const postUrl = 'https://api.hubapi.com/filemanager/api/v3/files/upload';
+        const headers = {
+            Authorization: `Bearer ${process.env.accessToken}`
+        };
+
+        const fileOptions = {
+            access: 'PUBLIC_INDEXABLE',
+            ttl: 'P3M',
+            overwrite: false,
+            duplicateValidationStrategy: 'NONE',
+            duplicateValidationScope: 'ENTIRE_PORTAL'
+        };
+
+        const folderPath = `${process.env.folderPath}`;
+        const filepaths = [
+            path.resolve() + '/public/pdf_files/2cube-test_en.pdf',
+            path.resolve() + '/public/pdf_files/2cube-test_es.pdf',
+            path.resolve() + '/public/pdf_files/2cube-test_fr.pdf'
+        ];
+
+        filepaths.forEach((filepath) => {
+            const formData = {
+                file: fs.createReadStream(filepath),
+                options: JSON.stringify(fileOptions),
+                folderPath: folderPath
+            };
+
+            request.post({
+                url: postUrl,
+                formData: formData,
+                headers: headers
+            }, function optionalCallback(err, httpResponse, body) {
+                if (err) {
+                    console.error('Error:', err);
+                    return;
+                }
+                console.log(`File ${filepath} uploaded successfully`);
+                // res.status(200).send('File uploaded successfully')
+            });
+        });
+
+    }
+
     // Example usage
     async function main() {
-        // const udata = {
-        //     fname: data.firstname,
-        //     lname: data.lastname,
-        //     email: data.email
-        // }
 
         // English data
         const data_en = {
@@ -56,7 +99,7 @@ const sendEMail = async (req, res, data) => {
         const filePath_en = path.resolve() + '/public/pdf_files/2cube-test_en.pdf';
         await writeFileAsync(filePath_en, pdfBuffer_en);
         const pdfPath_en = filePath_en;
-        // console.log(`PDF saved to ${filePath_en}`);
+        console.log(`PDF saved to ${filePath_en}`);
 
         // French PDF
         const htmlTemplate_fr = fs.readFileSync(path.resolve() + '/src/assets/templates/index_fr.html', 'utf8');
@@ -68,7 +111,7 @@ const sendEMail = async (req, res, data) => {
         const filePath_fr = path.resolve() + '/public/pdf_files/2cube-test_fr.pdf';
         await writeFileAsync(filePath_fr, pdfBuffer_fr);
         const pdfPath_fr = filePath_fr;
-        // console.log(`PDF saved to ${filePath_fr}`);
+        console.log(`PDF saved to ${filePath_fr}`);
 
         // Spanish PDF
         const htmlTemplate_es = fs.readFileSync(path.resolve() + '/src/assets/templates/index_es.html', 'utf8');
@@ -80,26 +123,18 @@ const sendEMail = async (req, res, data) => {
         const filePath_es = path.resolve() + '/public/pdf_files/2cube-test_es.pdf';
         await writeFileAsync(filePath_es, pdfBuffer_es);
         const pdfPath_es = filePath_es;
-        // console.log(`PDF saved to ${filePath_es}`);
+        console.log(`PDF saved to ${filePath_es}`);
 
         // Email all PDFs
-        // const attachments = [
-        //     { filename: '2cube-test_en.pdf', content: pdfBuffer_en },
-        //     { filename: '2cube-test_fr.pdf', content: pdfBuffer_fr },
-        //     { filename: '2cube-test_es.pdf', content: pdfBuffer_es }
-        // ];
-
-        // Return an array of file paths
-        return [pdfPath_en, pdfPath_fr, pdfPath_es];
+        const attachments = [
+            { filename: '2cube-test_en.pdf', content: pdfBuffer_en },
+            { filename: '2cube-test_fr.pdf', content: pdfBuffer_fr },
+            { filename: '2cube-test_es.pdf', content: pdfBuffer_es }
+        ];
+        await StorePdf(attachments);
     }
 
-    // main();
-
-    // Call main() and log the returned file paths
-    main().then((pdfPaths) => {
-        console.log('PDF files saved to:', pdfPaths);
-    });
-
+    main();
 
 };
 

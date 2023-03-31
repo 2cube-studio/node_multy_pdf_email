@@ -4,7 +4,6 @@ import cors from 'cors';
 import { resolve } from 'path';
 import bodyParser from 'body-parser';
 
-import connection from "./config/db-connection.js"
 import HttpException from './utils/HttpException.utils.js';
 import userRouter from './routes/user.route.js';
 
@@ -22,8 +21,6 @@ app.use(express.json());
 app.use(express.urlencoded({extended: true}));
 
 app.use('/images', express.static(resolve('public', 'images')))
-// app.use('/public', express.static('public'));
-// app.use(express.static(path.resolve()));
 
 // enabling cors for all requests by using cors middleware
 app.use(cors());
@@ -39,7 +36,6 @@ app.all('*', (req, res, next) => {
     next(err);
 });
 
-connection();
 // starting the server
 var server = app.listen(PORT, () =>
     console.log(`🚀 Server running on port ${PORT}!`));
