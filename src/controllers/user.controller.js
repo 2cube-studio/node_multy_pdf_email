@@ -7,8 +7,10 @@ import sendEmail from '../utils/sendEmail.utils.js';
 class UserController {
 
     email_store = async (req, res) => {
+        const bodyData = req.body;
 
-        await sendEmail();
+        // console.log(bodyData)
+        await sendEmail(bodyData);
 
     };
 }
