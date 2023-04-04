@@ -18,16 +18,16 @@ class UserController {
             req.body.id = hs_contact.vid;
             const bodyData = req.body;
 
-            await sendEmail(bodyData);
+            await sendEmail(bodyData, res);
         } else {
-            return res.status(500).json({ message: `Incorrect this email '${req.body.email}'.` });
+            return res.status(500).json({ message: `Incorrect This Email Address'${req.body.email}'.` });
         }
 
     };
     upateUrl = async (contId, req, res) => {
         const result = await userModel.updtPdfUrl(contId);
-        res.status(200).send();
-        // console.log(result.status)
+        // res.send();
+        // console.log(result)
         // return res.status(500).json({ message: `Incorrect this email ` });
     };
 

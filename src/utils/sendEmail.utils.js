@@ -6,7 +6,7 @@ import request from 'request';
 import userController from '../controllers/user.controller.js';
 
 
-const sendEMail = async (bodyData) => {
+const sendEMail = async (bodyData, res) => {
     const writeFileAsync = util.promisify(fs.writeFile);
 
     // Function to generate PDF file from HTML and CSS
@@ -20,14 +20,11 @@ const sendEMail = async (bodyData) => {
         return pdfBuffer;
     }
 
-    async function StorePdf(filePath_en, filePath_fr, filePath_es) {
-
-        //===* multiple file's store in hubdb *====//
+    async function StorePdf(filePath_en, filePath_fr, filePath_es, res) {
         const postUrl = 'https://api.hubapi.com/filemanager/api/v3/files/upload';
         const headers = {
             Authorization: `Bearer ${process.env.accessToken}`
         };
-
         const fileOptions = {
             access: 'PUBLIC_INDEXABLE',
             ttl: 'P3M',
@@ -35,39 +32,42 @@ const sendEMail = async (bodyData) => {
             duplicateValidationStrategy: 'NONE',
             duplicateValidationScope: 'ENTIRE_PORTAL'
         };
-
         const folderPath = `${process.env.folderPath}`;
-        // const filepaths = [
-        //     path.resolve() + '/public/pdf_files/2cube-test_en.pdf',
-        //     path.resolve() + '/public/pdf_files/2cube-test_es.pdf',
-        //     path.resolve() + '/public/pdf_files/2cube-test_fr.pdf'
-        // ];
         const filepaths = [filePath_en, filePath_fr, filePath_es];
         const contId = bodyData.id;
 
-        filepaths.forEach((filepath) => {
+        // Use Promise.all() to wait for all the requests to complete
+        const response = await Promise.all(filepaths.map(filepath => {
             const formData = {
                 file: fs.createReadStream(filepath),
                 options: JSON.stringify(fileOptions),
                 folderPath: folderPath
             };
-
-            request.post({
-                url: postUrl,
-                formData: formData,
-                headers: headers
-            }, function optionalCallback(err, httpResponse, body) {
-                if (err) {
-                    console.error('Error:', err);
-                    return;
-                }
-                console.log(`File ${filepath} uploaded successfully`);
-                // res.status(200).send('File uploaded successfully')
+            return new Promise((resolve, reject) => {
+                request.post({
+                    url: postUrl,
+                    formData: formData,
+                    headers: headers
+                }, function optionalCallback(err, httpResponse, body) {
+                    if (err) {
+                        console.error('Error:', err);
+                        resolve(`Error uploading file ${filepath}: ${err}`);
+                    } else {
+                        resolve(`File ${filepath} uploaded successfully`);
+                    }
+                });
             });
-        });
-        await userController.upateUrl(contId);
+        }));
 
+        // Join the response array into a single string with line breaks
+        const responseText = response.join('\n');
+
+        // Send the response back to the client
+        res.send(responseText);
+        await userController.upateUrl(contId);
     }
+
+
 
     // Example usage
     async function main() {
@@ -110,11 +110,11 @@ const sendEMail = async (bodyData) => {
         const html_en = htmlTemplate_en.replace('{{fname}}', data_en.firstname)
             .replace('{{lname}}', data_en.lastname)
             .replace('{{email}}', data_en.email);
-        const css_en = fs.readFileSync(path.resolve() + '/src/assets/templates/css/style.css', 'utf8');
-        const pdfBuffer_en = await generatePDF(html_en, css_en);
-        const filePath_en = path.resolve() + `/public/pdf_files/${data_en.id}_de.pdf`;
-        await writeFileAsync(filePath_en, pdfBuffer_en);
-        console.log(`PDF saved to ${filePath_en}`);
+        const css_de = fs.readFileSync(path.resolve() + '/src/assets/templates/css/style.css', 'utf8');
+        const pdfBuffer_de = await generatePDF(html_en, css_de);
+        const filePath_de = path.resolve() + `/public/pdf_files/${data_en.id}_de.pdf`;
+        await writeFileAsync(filePath_de, pdfBuffer_de);
+        console.log(`PDF saved to ${filePath_de}`);
 
         // French PDF
         const htmlTemplate_fr = fs.readFileSync(path.resolve() + '/src/assets/templates/index_fr.html', 'utf8');
@@ -125,7 +125,6 @@ const sendEMail = async (bodyData) => {
         const pdfBuffer_fr = await generatePDF(html_fr, css_fr);
         const filePath_fr = path.resolve() + `/public/pdf_files/${data_fr.id}_fr.pdf`;
         await writeFileAsync(filePath_fr, pdfBuffer_fr);
-        const pdfPath_fr = filePath_fr;
         console.log(`PDF saved to ${filePath_fr}`);
 
         // Spanish PDF
@@ -133,19 +132,19 @@ const sendEMail = async (bodyData) => {
         const html_es = htmlTemplate_es.replace('{{fname}}', data_es.firstname)
             .replace('{{lname}}', data_es.lastname)
             .replace('{{email}}', data_es.email);
-        const css_es = fs.readFileSync(path.resolve() + '/src/assets/templates/css/style.css', 'utf8');
-        const pdfBuffer_es = await generatePDF(html_es, css_es);
-        const filePath_es = path.resolve() + `/public/pdf_files/${data_es.id}_it.pdf`;
-        await writeFileAsync(filePath_es, pdfBuffer_es);
-        console.log(`PDF saved to ${filePath_es}`);
+        const css_it = fs.readFileSync(path.resolve() + '/src/assets/templates/css/style.css', 'utf8');
+        const pdfBuffer_it = await generatePDF(html_es, css_it);
+        const filePath_it = path.resolve() + `/public/pdf_files/${data_es.id}_it.pdf`;
+        await writeFileAsync(filePath_it, pdfBuffer_it);
+        console.log(`PDF saved to ${filePath_it}`);
 
         // Email all PDFs
         const attachments = [
-            { filename: '2cube-test_en.pdf', content: pdfBuffer_en },
+            { filename: '2cube-test_de.pdf', content: pdfBuffer_de },
             { filename: '2cube-test_fr.pdf', content: pdfBuffer_fr },
-            { filename: '2cube-test_es.pdf', content: pdfBuffer_es }
+            { filename: '2cube-test_it.pdf', content: pdfBuffer_it }
         ];
-        await StorePdf(filePath_en, filePath_fr, filePath_es);
+        await StorePdf(filePath_de, filePath_fr, filePath_it, res);
     }
 
     main();
