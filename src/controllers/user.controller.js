@@ -14,16 +14,21 @@ class UserController {
 
         const hs_contact = await userModel.getContactData(email)
 
-        req.body.id = hs_contact.vid;
-        const bodyData = req.body;
-        // console.log(bodyData)
+        if (hs_contact !== null) {
+            req.body.id = hs_contact.vid;
+            const bodyData = req.body;
 
-        await sendEmail(bodyData);
+            await sendEmail(bodyData);
+        } else {
+            return res.status(500).json({ message: `Incorrect this email '${req.body.email}'.` });
+        }
 
     };
-    upateUrl = async (filepaths, contId) => {
-        // console.log('controller', filepaths)
-        await userModel.updtPdfUrl(filepaths, contId)
+    upateUrl = async (contId, req, res) => {
+        const result = await userModel.updtPdfUrl(contId);
+        res.status(200).send();
+        // console.log(result.status)
+        // return res.status(500).json({ message: `Incorrect this email ` });
     };
 
     email_store = async (req, res) => {

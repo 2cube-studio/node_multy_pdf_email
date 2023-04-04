@@ -1,7 +1,7 @@
 import fetch from "node-fetch";
 import hubspot from '@hubspot/api-client';
 
-const hubspotClient = new hubspot.Client({ "accessToken": process.env.accessToken });
+
 
 class JobModel {
 
@@ -18,29 +18,37 @@ class JobModel {
 
         let ContactData = await data.json();
 
-        return ContactData;
+        if (ContactData.category == "OBJECT_NOT_FOUND") {
+            return null;
+        } else {
+            return ContactData
+        }
     };
 
-    updtPdfUrl = async (filepaths, contId) => {
+    //Base URL - https://6107279.fs1.hubspotusercontent-na1.net/hubfs/6107279/Energiesparrechner_PDFs/
+    updtPdfUrl = async (contId, req, res) => {
+        let data = []
 
-        
+        const hubspotClient = new hubspot.Client({ "accessToken": process.env.accessToken });
 
+        let baseURL = 'https://6107279.fs1.hubspotusercontent-na1.net/hubfs/6107279/Energiesparrechner_PDFs/';
         const properties = {
-            "de_pdf": "new_151_en.pdf",
-            "fr_pdf": "new_151_es.pdf",
-            "it_pdf": "new_151_fr.pdf",
+            "de_pdf": `${baseURL}${contId}_de.pdf`,
+            "fr_pdf": `${baseURL}${contId}_fr.pdf`,
+            "it_pdf": `${baseURL}${contId}_it.pdf`,
         };
         const SimplePublicObjectInput = { properties };
-        const contactId = 151;
+        const contactId = contId;
 
         try {
             const apiResponse = await hubspotClient.crm.contacts.basicApi.update(contactId, SimplePublicObjectInput);
-            // console.log(JSON.stringify(apiResponse, null, 2));
-            return JSON.stringify(apiResponse.results, null, 2);
+            // console.log(JSON.stringify(apiResponse.results, null, 2));
+            // return JSON.stringify(apiResponse.results, null, 2);
+            data['create_res'] = apiResponse
         } catch (e) {
-            e.message === 'HTTP request failed'
-                ? console.error(JSON.stringify(e.response, null, 2))
-                : console.error(e)
+            e.message === 'HTTP request failed' ?
+                console.error(JSON.stringify(e.response, null, 2)) :
+                console.error(e)
         }
     }
 

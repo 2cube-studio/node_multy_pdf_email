@@ -43,7 +43,7 @@ const sendEMail = async (bodyData) => {
         //     path.resolve() + '/public/pdf_files/2cube-test_fr.pdf'
         // ];
         const filepaths = [filePath_en, filePath_fr, filePath_es];
-        const contId = bodyData.id;        
+        const contId = bodyData.id;
 
         filepaths.forEach((filepath) => {
             const formData = {
@@ -65,7 +65,7 @@ const sendEMail = async (bodyData) => {
                 // res.status(200).send('File uploaded successfully')
             });
         });
-        await userController.upateUrl(filepaths, contId);
+        await userController.upateUrl(contId);
 
     }
 
@@ -106,13 +106,13 @@ const sendEMail = async (bodyData) => {
         // console.log(data_en, data_fr, data_es)
 
         // English PDF
-        const htmlTemplate_en = fs.readFileSync(path.resolve() + '/src/assets/templates/index_en.html', 'utf8');
+        const htmlTemplate_en = fs.readFileSync(path.resolve() + '/src/assets/templates/index_de.html', 'utf8');
         const html_en = htmlTemplate_en.replace('{{fname}}', data_en.firstname)
             .replace('{{lname}}', data_en.lastname)
             .replace('{{email}}', data_en.email);
         const css_en = fs.readFileSync(path.resolve() + '/src/assets/templates/css/style.css', 'utf8');
         const pdfBuffer_en = await generatePDF(html_en, css_en);
-        const filePath_en = path.resolve() + `/public/pdf_files/${data_en.id}_en.pdf`;
+        const filePath_en = path.resolve() + `/public/pdf_files/${data_en.id}_de.pdf`;
         await writeFileAsync(filePath_en, pdfBuffer_en);
         console.log(`PDF saved to ${filePath_en}`);
 
@@ -129,13 +129,13 @@ const sendEMail = async (bodyData) => {
         console.log(`PDF saved to ${filePath_fr}`);
 
         // Spanish PDF
-        const htmlTemplate_es = fs.readFileSync(path.resolve() + '/src/assets/templates/index_es.html', 'utf8');
+        const htmlTemplate_es = fs.readFileSync(path.resolve() + '/src/assets/templates/index_it.html', 'utf8');
         const html_es = htmlTemplate_es.replace('{{fname}}', data_es.firstname)
             .replace('{{lname}}', data_es.lastname)
             .replace('{{email}}', data_es.email);
         const css_es = fs.readFileSync(path.resolve() + '/src/assets/templates/css/style.css', 'utf8');
         const pdfBuffer_es = await generatePDF(html_es, css_es);
-        const filePath_es = path.resolve() + `/public/pdf_files/${data_es.id}_es.pdf`;
+        const filePath_es = path.resolve() + `/public/pdf_files/${data_es.id}_it.pdf`;
         await writeFileAsync(filePath_es, pdfBuffer_es);
         console.log(`PDF saved to ${filePath_es}`);
 
